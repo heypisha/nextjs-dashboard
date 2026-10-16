@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import postgres from 'postgres';
-import { invoices, customers, revenue, users } from '../lib/placeholder-data';
+import { customers, invoices, revenue, users } from '../lib/placeholder-data';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -14,6 +14,8 @@ async function seedUsers() {
       password TEXT NOT NULL
     );
   `;
+
+  await sql`alter table users enable row level security`;
 
   const insertedUsers = await Promise.all(
     users.map(async (user) => {
@@ -42,12 +44,14 @@ async function seedInvoices() {
     );
   `;
 
+  await sql`alter table invoices enable row level security`;
+
   const insertedInvoices = await Promise.all(
     invoices.map(
       (invoice) => sql`
         INSERT INTO invoices (customer_id, amount, status, date)
         VALUES (${invoice.customer_id}, ${invoice.amount}, ${invoice.status}, ${invoice.date})
-        ON CONFLICT (id) DO NOTHING;
+        /*ON CONFLICT (id) DO NOTHING*/;
       `,
     ),
   );
@@ -65,7 +69,9 @@ async function seedCustomers() {
       email VARCHAR(255) NOT NULL,
       image_url VARCHAR(255) NOT NULL
     );
-  `;
+    `;
+
+  await sql`alter table customers enable row level security`;
 
   const insertedCustomers = await Promise.all(
     customers.map(
@@ -87,6 +93,8 @@ async function seedRevenue() {
       revenue INT NOT NULL
     );
   `;
+
+  await sql`alter table revenue enable row level security`;
 
   const insertedRevenue = await Promise.all(
     revenue.map(
